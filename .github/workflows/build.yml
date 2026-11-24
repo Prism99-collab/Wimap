@@ -49,7 +49,7 @@ jobs:
           & $iscc /Q installer\Wimap.iss
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
 
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v6
         with:
           name: Wimap
           path: |
