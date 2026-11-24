@@ -76,11 +76,11 @@ Your last map is kept in `%LOCALAPPDATA%\Wimap` so it opens instantly next time.
 
 ## Building from source
 
-You need the .NET 8 SDK and Node.js 20. For the installer you also need [Inno Setup 6](https://jrsoftware.org/isinfo.php), which you can get with `winget install JRSoftware.InnoSetup`.
+You need the .NET 8 SDK and Node.js 20 or later. For the installer you also need [Inno Setup 6](https://jrsoftware.org/isinfo.php), which you can get with `winget install JRSoftware.InnoSetup`.
 
 ```powershell
 dotnet test tests/Wimap.Tests
-node --test tests/ui
+node --test (Get-ChildItem tests/ui/*.test.js).FullName
 dotnet publish src/Wimap -c Release -o dist
 ```
 

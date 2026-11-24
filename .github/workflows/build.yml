@@ -24,7 +24,8 @@ jobs:
           node-version: 22
 
       - name: UI tests
-        run: node --test tests/ui
+        shell: bash
+        run: node --test tests/ui/*.test.js
 
       - name: Check UI scripts parse
         shell: bash

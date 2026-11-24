@@ -14,7 +14,7 @@ if (-not $iscc) { throw 'Inno Setup 6 is not installed. Install it with: winget 
 if (-not $SkipTests) {
   dotnet test "$root\tests\Wimap.Tests" -c Release
   if ($LASTEXITCODE) { throw 'dotnet tests failed' }
-  node --test "$root\tests\ui"
+  node --test (Get-ChildItem "$root\tests\ui\*.test.js").FullName
   if ($LASTEXITCODE) { throw 'UI tests failed' }
 }
 
