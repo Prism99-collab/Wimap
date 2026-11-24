@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wimap</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="viewer.css">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<header class="bar">
+  <div class="brand">
+    <svg class="mark" viewBox="0 0 32 32" aria-hidden="true">
+      <g fill="none" stroke-width="1.6" stroke-linecap="round">
+        <path d="M16 16 6.5 8.5" stroke="var(--c-apps)"/><path d="M16 16 26 7" stroke="var(--c-ai)"/>
+        <path d="M16 16 27.5 21" stroke="var(--c-browsers)"/><path d="M16 16 9 26.5" stroke="var(--c-files)"/>
+        <path d="M16 16 19.5 28" stroke="var(--c-dev)"/>
+      </g>
+      <circle cx="6.5" cy="8.5" r="2.2" fill="var(--c-apps)"/><circle cx="26" cy="7" r="2.2" fill="var(--c-ai)"/>
+      <circle cx="27.5" cy="21" r="2.2" fill="var(--c-browsers)"/><circle cx="9" cy="26.5" r="2.2" fill="var(--c-files)"/>
+      <circle cx="19.5" cy="28" r="1.8" fill="var(--c-dev)"/>
+      <circle cx="16" cy="16" r="5" fill="var(--accent)"/>
+    </svg>
+    <span class="word">Wimap</span>
+  </div>
+  <nav class="menubar" id="menubar" aria-label="Main menu"></nav>
+  <span class="where mono" id="where"></span>
+  <div class="bar-actions">
+    <button class="icon-btn quiet" id="openPrefs" type="button" aria-label="Settings" title="Settings (Ctrl+,)">
+      <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12.2 2h-.4a2 2 0 0 0-2 2v.2a2 2 0 0 1-1 1.7l-.4.3a2 2 0 0 1-2 0l-.2-.1a2 2 0 0 0-2.7.7l-.2.4a2 2 0 0 0 .7 2.7l.2.1a2 2 0 0 1 1 1.7v.6a2 2 0 0 1-1 1.7l-.2.1a2 2 0 0 0-.7 2.7l.2.4a2 2 0 0 0 2.7.7l.2-.1a2 2 0 0 1 2 0l.4.3a2 2 0 0 1 1 1.7v.2a2 2 0 0 0 2 2h.4a2 2 0 0 0 2-2v-.2a2 2 0 0 1 1-1.7l.4-.3a2 2 0 0 1 2 0l.2.1a2 2 0 0 0 2.7-.7l.2-.4a2 2 0 0 0-.7-2.7l-.2-.1a2 2 0 0 1-1-1.7v-.6a2 2 0 0 1 1-1.7l.2-.1a2 2 0 0 0 .7-2.7l-.2-.4a2 2 0 0 0-2.7-.7l-.2.1a2 2 0 0 1-2 0l-.4-.3a2 2 0 0 1-1-1.7V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+    </button>
+    <span class="bar-sep" aria-hidden="true"></span>
+    <button class="btn ghost" id="newScan" type="button" hidden>New scan</button>
+    <button class="btn primary" id="openExport" type="button" hidden>Export<kbd class="on-light">Ctrl E</kbd></button>
+  </div>
+</header>
+
+<main>
+  <section class="screen home" id="home">
+    <div class="home-copy">
+      <h1>Everything on this PC, drawn as one map</h1>
+      <p class="lede">Wimap reads your apps and their folders, AI tools, browsers, files and drives. Search the map here, then keep it as one HTML file for your next PC.</p>
+
+      <fieldset class="what">
+        <legend>What to map</legend>
+        <div class="rows" id="scanRows"></div>
+      </fieldset>
+
+      <div class="depth">
+        <span id="depthLabel">Folder detail</span>
+        <div class="seg" role="radiogroup" aria-labelledby="depthLabel" id="depthSeg">
+          <button type="button" role="radio" data-depth="2" aria-checked="false">2 levels</button>
+          <button type="button" role="radio" data-depth="3" aria-checked="true">3 levels</button>
+          <button type="button" role="radio" data-depth="4" aria-checked="false">4 levels</button>
+        </div>
+      </div>
+
+      <div class="cta">
+        <button class="btn primary lg" id="startScan" type="button">Map this PC</button>
+        <button class="btn lg" id="openLast" type="button" hidden>Open last map</button>
+        <button class="btn ghost lg" id="openFileBtn" type="button">Open a map file</button>
+      </div>
+      <p class="trust">Nothing leaves this PC. Wimap reads names, sizes and versions. It never opens passwords, cookies, browsing history or API keys.</p>
+    </div>
+    <div class="home-visual">
+      <canvas id="previewCanvas" aria-hidden="true"></canvas>
+      <p class="visual-note mono" id="visualNote"></p>
+    </div>
+  </section>
+
+  <section class="screen mapscreen" id="mapScreen" hidden>
+    <div id="viewer"></div>
+    <aside class="scanpanel" id="scanPanel" hidden aria-live="polite">
+      <div class="sp-head">
+        <h2 id="spTitle">Mapping</h2>
+        <span class="mono num" id="spTime">0.0 s</span>
+      </div>
+      <ol class="stages" id="stages"></ol>
+      <div class="ticker">
+        <div class="mono num" id="spFiles">Starting</div>
+        <div class="mono path" id="spPath"></div>
+      </div>
+      <button class="btn ghost sm" id="stopScan" type="button">Stop</button>
+    </aside>
+  </section>
+</main>
+
+<!-- Export HTML -->
+<dialog class="sheet" id="exportDlg" aria-labelledby="exTitle">
+  <form class="ex-form" id="exForm" method="dialog">
+    <div class="dlg-head">
+      <h2 id="exTitle">Export</h2>
+      <button class="icon-btn sm" type="button" data-close aria-label="Close"><svg class="i" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <p class="dlg-lede">One HTML file with the map, search and a reinstall checklist. It opens in any browser and works offline.</p>
+
+    <label class="field"><span>Title</span><input id="exName" type="text" autocomplete="off" spellcheck="false" maxlength="120"></label>
+
+    <fieldset class="group">
+      <legend>Branches</legend>
+      <div id="exBranches"></div>
+    </fieldset>
+
+    <fieldset class="group">
+      <legend>Privacy</legend>
+      <label class="check"><input type="checkbox" id="exBookmarks" checked><span>Bookmarks</span><small>Your saved links in every browser</small></label>
+      <label class="check"><input type="checkbox" id="exHideUser"><span>Hide my user folder</span><small>Paths show %USERPROFILE% instead of <span class="mono" id="exHome"></span></small></label>
+    </fieldset>
+
+    <fieldset class="group">
+      <legend>Extras</legend>
+      <label class="check"><input type="checkbox" id="exIcons" checked><span>App icons</span><small class="mono num" id="exIconSize"></small></label>
+      <label class="check"><input type="checkbox" id="exWinget"><span>winget restore file</span><small>Saved next to the map. On the new PC, run <span class="mono">winget import</span> with it to reinstall most apps</small></label>
+    </fieldset>
+
+    <div class="dlg-foot" id="exFoot">
+      <span class="mono num" id="exSize"></span>
+      <button class="btn primary lg" type="submit" id="exSave">Save HTML</button>
+    </div>
+    <div class="dlg-foot done" id="exDone" hidden>
+      <p><span class="ok">Saved</span> <span class="mono" id="exPath"></span></p>
+      <p class="mono" id="exWingetMsg" hidden></p>
+      <div class="row-actions">
+        <button class="btn sm" type="button" id="exOpen">Open in browser</button>
+        <button class="btn sm" type="button" id="exReveal">Show in folder</button>
+      </div>
+    </div>
+  </form>
+  <div class="ex-preview">
+    <div class="ex-frame-bar mono"><span id="exFile">map.html</span><span>Preview</span></div>
+    <iframe id="exFrame" title="Export preview" sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox"></iframe>
+  </div>
+</dialog>
+
+<!-- Export image -->
+<dialog class="dlg" id="imageDlg" aria-labelledby="imTitle">
+  <form method="dialog" id="imForm">
+    <div class="dlg-head">
+      <h2 id="imTitle">Export image</h2>
+      <button class="icon-btn sm" type="button" data-close aria-label="Close"><svg class="i" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="im-grid">
+      <div class="im-opts">
+        <div class="opt"><span id="imFmtL">Format</span>
+          <div class="seg" role="radiogroup" aria-labelledby="imFmtL" data-name="format">
+            <button type="button" role="radio" data-v="png" aria-checked="true">PNG</button>
+            <button type="button" role="radio" data-v="jpeg" aria-checked="false">JPEG</button>
+            <button type="button" role="radio" data-v="svg" aria-checked="false">SVG</button>
+          </div>
+        </div>
+        <div class="opt"><span id="imAreaL">Area</span>
+          <div class="seg" role="radiogroup" aria-labelledby="imAreaL" data-name="area">
+            <button type="button" role="radio" data-v="view" aria-checked="true">What is on screen</button>
+            <button type="button" role="radio" data-v="map" aria-checked="false">Whole map</button>
+          </div>
+        </div>
+        <div class="opt" id="imScaleOpt"><span id="imScaleL">Resolution</span>
+          <div class="seg" role="radiogroup" aria-labelledby="imScaleL" data-name="scale">
+            <button type="button" role="radio" data-v="1" aria-checked="false">1x</button>
+            <button type="button" role="radio" data-v="2" aria-checked="true">2x</button>
+            <button type="button" role="radio" data-v="3" aria-checked="false">3x</button>
+          </div>
+        </div>
+        <div class="opt" id="imBgOpt"><span id="imBgL">Background</span>
+          <div class="seg" role="radiogroup" aria-labelledby="imBgL" data-name="bg">
+            <button type="button" role="radio" data-v="dark" aria-checked="true">Dark</button>
+            <button type="button" role="radio" data-v="none" aria-checked="false">Transparent</button>
+          </div>
+        </div>
+        <p class="hint">The image shows the branches as they are open right now. Open or fold branches first to choose what it includes.</p>
+      </div>
+      <div class="im-preview"><img id="imPreview" alt="Preview of the image"></div>
+    </div>
+    <div class="dlg-foot">
+      <span class="mono num" id="imInfo"></span>
+      <button class="btn primary lg" type="submit" id="imSave">Save image</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Preferences -->
+<dialog class="dlg narrow" id="prefsDlg" aria-labelledby="prTitle">
+  <form method="dialog" id="prForm">
+    <div class="dlg-head">
+      <h2 id="prTitle">Preferences</h2>
+      <button class="icon-btn sm" type="button" data-close aria-label="Close"><svg class="i" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="prefs">
+      <h3>Layout</h3>
+      <div class="opt"><span id="prPanelL">Details panel</span>
+        <div class="seg" role="radiogroup" aria-labelledby="prPanelL" data-pref="panel">
+          <button type="button" role="radio" data-v="right">Right</button>
+          <button type="button" role="radio" data-v="left">Left</button>
+          <button type="button" role="radio" data-v="bottom">Bottom</button>
+        </div>
+      </div>
+      <label class="sw"><span>Navigation tools on the map</span><span class="switch"><input type="checkbox" data-pref="tools"><span></span></span></label>
+      <label class="sw"><span>Branch filters above the map</span><span class="switch"><input type="checkbox" data-pref="legend"><span></span></span></label>
+      <label class="sw"><span>Hints at the bottom of the map</span><span class="switch"><input type="checkbox" data-pref="hints"><span></span></span></label>
+
+      <h3>Map</h3>
+      <div class="opt"><span id="prLabelL">Label size</span>
+        <div class="seg" role="radiogroup" aria-labelledby="prLabelL" data-pref="labelScale">
+          <button type="button" role="radio" data-v="0.9">Small</button>
+          <button type="button" role="radio" data-v="1">Medium</button>
+          <button type="button" role="radio" data-v="1.2">Large</button>
+        </div>
+      </div>
+      <div class="opt"><span id="prLinksL">Lines</span>
+        <div class="seg" role="radiogroup" aria-labelledby="prLinksL" data-pref="links">
+          <button type="button" role="radio" data-v="curved">Curved</button>
+          <button type="button" role="radio" data-v="straight">Straight</button>
+        </div>
+      </div>
+      <div class="opt"><span id="prDepthL">Open when a map loads</span>
+        <div class="seg" role="radiogroup" aria-labelledby="prDepthL" data-pref="openDepth">
+          <button type="button" role="radio" data-v="1">Branches</button>
+          <button type="button" role="radio" data-v="2">Groups</button>
+          <button type="button" role="radio" data-v="3">One more level</button>
+        </div>
+      </div>
+      <label class="sw"><span>App icons on the map</span><span class="switch"><input type="checkbox" data-pref="icons"><span></span></span></label>
+      <label class="sw"><span>Animations</span><span class="switch"><input type="checkbox" data-pref="motion"><span></span></span></label>
+      <label class="sw"><span>Twist with two fingers to rotate</span><span class="switch"><input type="checkbox" data-pref="rotateGestures"><span></span></span></label>
+
+      <h3>Saved map</h3>
+      <p class="hint">Your last map is kept in <span class="mono" id="prDataDir">%LOCALAPPDATA%\Wimap</span> so it opens instantly next time.</p>
+      <div class="row-actions">
+        <button class="btn sm" type="button" id="prForget">Forget saved map</button>
+        <button class="btn ghost sm" type="button" id="prReset">Reset preferences</button>
+      </div>
+    </div>
+  </form>
+</dialog>
+
+<!-- Keyboard shortcuts -->
+<dialog class="dlg narrow" id="keysDlg" aria-labelledby="kyTitle">
+  <form method="dialog">
+    <div class="dlg-head">
+      <h2 id="kyTitle">Shortcuts and search</h2>
+      <button class="icon-btn sm" type="button" data-close aria-label="Close"><svg class="i" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="keys" id="keysBody"></div>
+  </form>
+</dialog>
+
+<!-- About -->
+<dialog class="dlg narrow" id="aboutDlg" aria-labelledby="abTitle">
+  <form method="dialog">
+    <div class="dlg-head">
+      <h2 id="abTitle">About Wimap</h2>
+      <button class="icon-btn sm" type="button" data-close aria-label="Close"><svg class="i" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="about">
+      <p><b>Wimap</b> <span class="mono" id="abVersion"></span></p>
+      <p>Maps what is on a Windows PC and keeps it as one HTML file you can open anywhere.</p>
+      <p class="hint">Everything stays on this PC. Wimap reads names, sizes and versions, never passwords, cookies, browsing history or API keys.</p>
+    </div>
+  </form>
+</dialog>
+
+<!-- Confirm -->
+<dialog class="dlg narrow" id="confirmDlg" aria-labelledby="cfTitle" aria-describedby="cfText">
+  <form method="dialog">
+    <div class="dlg-head"><h2 id="cfTitle"></h2></div>
+    <p id="cfText" class="dlg-lede"></p>
+    <div class="dlg-foot end">
+      <button class="btn ghost" value="cancel" type="submit">Cancel</button>
+      <button class="btn primary" value="ok" type="submit" id="cfOk"></button>
+    </div>
+  </form>
+</dialog>
+
+<script src="search.js"></script>
+<script src="svg.js"></script>
+<script src="map.js"></script>
+<script src="viewer.js"></script>
+<script src="menus.js"></script>
+<script src="export.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

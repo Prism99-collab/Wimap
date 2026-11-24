@@ -1,0 +1,18 @@
+# Build output
+bin/
+obj/
+dist/
+publish/
+*.user
+.vs/
+
+# Test and tool scratch
+.playwright-mcp/
+TestResults/
+node_modules/
+
+# Maps hold personal data (apps, paths, bookmarks). Never commit one by accident.
+*.wimap.json
+sample.json
+sample-scan.json
+/*.html

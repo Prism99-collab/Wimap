@@ -1,0 +1,47 @@
+/* Exported map page: header with tabs, the map, and the reinstall checklist. */
+body { display: flex; flex-direction: column; }
+.x-head { height: 64px; flex: none; display: flex; align-items: center; gap: 16px; padding: 0 20px; border-bottom: 1px solid var(--line); }
+.x-head .mark { width: 26px; height: 26px; flex: none; }
+.x-title { display: flex; flex-direction: column; min-width: 0; }
+.x-title h1 { margin: 0; font: 500 16px/20px var(--font); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.x-title p { margin: 0; color: var(--fg-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tabs { margin-left: auto; display: inline-flex; padding: 3px; gap: 2px; border-radius: 10px; background: var(--bg-1); border: 1px solid var(--line); }
+.tabs button { height: 30px; padding: 0 14px; border: 0; border-radius: 7px; background: transparent; color: var(--fg-2); font-size: 13px; transition: background-color 140ms var(--ease), color 140ms var(--ease); }
+.tabs button:hover { color: var(--fg); }
+.tabs button[aria-selected="true"] { background: var(--bg-3); color: var(--fg); }
+.x-main { flex: 1; min-height: 0; position: relative; }
+.x-main > section { position: absolute; inset: 0; }
+#x-map { position: absolute; inset: 0; }
+
+.list { overflow: auto; padding: 32px 24px 64px; }
+.list-in { max-width: 980px; margin: 0 auto; display: flex; flex-direction: column; gap: 32px; }
+.l-top { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+.l-top h2 { margin: 0; font: 500 28px/1.15 var(--display); letter-spacing: -0.01em; }
+.l-top p { margin: 6px 0 0; color: var(--fg-2); max-width: 60ch; }
+.progress { min-width: 240px; display: flex; flex-direction: column; gap: 8px; }
+.progress .bar { height: 6px; border-radius: 3px; background: var(--bg-3); overflow: hidden; }
+.progress .bar i { display: block; height: 100%; width: 0; background: var(--good); border-radius: 3px; transition: width 300ms var(--ease); }
+.progress span { color: var(--fg-2); text-align: right; }
+.l-tools { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.l-tools .search { width: 300px; }
+.l-tools label.hide { display: flex; gap: 8px; align-items: center; color: var(--fg-2); font-size: 13px; cursor: pointer; }
+.l-tools label.hide input { accent-color: var(--fg); }
+.l-sec h3 { margin: 0 0 4px; font: 500 16px/22px var(--font); display: flex; align-items: center; gap: 10px; }
+.l-sec h3 .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--c); }
+.l-sec h3 .n { margin-left: auto; color: var(--fg-3); font: 12px var(--mono); }
+.l-sec h4 { margin: 16px 0 4px; font: 500 13px var(--font); color: var(--fg-2); }
+.l-rows { border: 1px solid var(--line); border-radius: 12px; background: var(--bg-1); overflow: hidden; margin-top: 8px; }
+.l-row { display: grid; grid-template-columns: 18px 20px minmax(0, 1fr) auto; gap: 12px; align-items: center; min-height: 44px; padding: 6px 14px; }
+.l-row + .l-row { border-top: 1px solid var(--line); }
+.l-row input { width: 16px; height: 16px; margin: 0; accent-color: var(--good); cursor: pointer; }
+.l-row img, .l-row .kd { width: 18px; height: 18px; border-radius: 4px; }
+.l-row .kd { display: grid; place-items: center; }
+.l-row .kd::after { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--c); }
+.l-row .t { min-width: 0; display: flex; flex-direction: column; }
+.l-row .t b { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.l-row .t small { color: var(--fg-3); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.l-row a { color: var(--fg-2); font-size: 13px; text-decoration: none; padding: 4px 8px; border-radius: 6px; white-space: nowrap; }
+.l-row a:hover { background: var(--bg-3); color: var(--fg); }
+.l-row.done .t b { color: var(--fg-3); text-decoration: line-through; text-decoration-color: var(--fg-3); }
+.list.hide-done .l-row.done { display: none; }
+.l-foot { color: var(--fg-3); font-size: 12px; text-align: center; }
