@@ -492,7 +492,7 @@
 
   const wcDlg = $('welcomeDlg');
   let wcMap = null;
-  /** Opens over the home screen. The map on the left unfolds once from its branches; nothing loops. */
+  /** Opens over the home screen. The map on the left grows in once (WMap.intro); nothing loops. */
   function openWelcome() {
     if (wcDlg.open || state.scanning) return;
     $('wcHide').checked = !prefs.welcome;
@@ -501,13 +501,8 @@
     if (!wcMap) wcMap = new window.WMap($('welcomeCanvas'), { order: ORDER, prefs: { icons: prefs.icons, motion: prefs.motion, links: prefs.links } });
     wcMap.resize();
     const root = state.last ? state.last.root : { n: state.machine, k: 'root', c: ORDER.map(k => ({ n: BRANCHES[k].label, k: 'cat', ck: k })) };
-    wcMap.setData(root, state.last ? state.last.icons : {}, { openDepth: 1 });
-    setTimeout(() => {
-      if (!wcDlg.open) return;
-      for (const k of wcMap.root.kids) k.open = true;
-      wcMap.layout(false);
-      wcMap.fit(true);
-    }, 360);
+    wcMap.setData(root, state.last ? state.last.icons : {}, { openDepth: 2 });
+    wcMap.intro();
   }
   wcDlg.addEventListener('close', () => {
     prefs.welcome = !$('wcHide').checked;

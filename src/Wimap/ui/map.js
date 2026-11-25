@@ -9,6 +9,8 @@
 
   const TAU = Math.PI * 2;
   const EASE = t => 1 - Math.pow(1 - t, 4);
+  const EXPO = t => (t >= 1 ? 1 : 1 - Math.pow(2, -10 * t)); // fast start, long soft landing
+  const clamp01 = t => (t < 0 ? 0 : t > 1 ? 1 : t);
   const FONT = '"Segoe UI Variable Text","Segoe UI",system-ui,-apple-system,sans-serif';
   const MONO = '"Cascadia Mono","Cascadia Code",Consolas,ui-monospace,monospace';
   const MAX_LABEL = 38;
@@ -87,6 +89,7 @@
           cat: depth === 1 ? (raw.ck || 'apps') : cat, open: depth < openDepth,
           r: 0, th: 0, cr: 0, cth: 0, fr: 0, fth: 0, px: 0, py: 0, pa: 0, vk: [],
           label: clip(name), lw: undefined, cw: undefined, vis: false, exit: false,
+          g: 1, gt: 1, // entrance progress (eased, raw); 1 outside the intro
         };
         this.nodes.push(n);
         if (Array.isArray(raw.c)) raw.c.forEach((c, i) => n.kids.push(walk(c, n, depth + 1, n.cat, i)));
@@ -217,12 +220,40 @@
 
     /** Jump every running animation to its end (used before exporting an image). */
     settle() {
-      for (const n of this.visible) { n.cr = n.r; n.cth = n.th; }
+      for (const n of this.visible) { n.cr = n.r; n.cth = n.th; n.g = n.gt = 1; }
+      this.introAnim = null;
       for (const n of this.exiting) n.exit = false;
       this.exiting = []; this.anim = null; this.anchor = null;
       if (this.viewAnim) { this.view = { ...this.viewAnim.to }; this.viewAnim = null; }
       if (this.goal) { this.view = { ...this.goal }; this.goal = null; }
       this.inertia = null;
+    }
+
+    /**
+     * One-time entrance: the hub grows in, branches sprout from its edge sweeping clockwise from the top,
+     * and each branch's children fan out from it while the view settles. Skipped when motion is off.
+     */
+    intro() {
+      if (!this.root || !this.prefs.motion) return;
+      this.settle();
+      const sweep = n => (((n.th + Math.PI / 2) % TAU) + TAU) % TAU / TAU; // 0 at the top, clockwise
+      let end = 0;
+      for (const n of this.visible) {
+        if (n.depth === 0) { n.idel = 0; n.idur = 700; }
+        else if (n.depth === 1) { n.idel = 160 + sweep(n) * 340; n.idur = 900; }
+        else { n.idel = n.parent.idel + 300 + Math.min(n.parent.vk.indexOf(n), 24) * 16; n.idur = 800; }
+        n.g = n.gt = 0;
+        end = Math.max(end, n.idel + n.idur);
+      }
+      const now = performance.now();
+      this.introAnim = { t0: now, end };
+      // The camera arrives with the map: from slightly smaller and turned, into place.
+      const to = { ...this.view }, cx = this.w / 2, cy = this.h / 2, f = 0.86, da = -0.16;
+      const c = Math.cos(da), sn = Math.sin(da), dx = (to.x - cx) * f, dy = (to.y - cy) * f;
+      const from = { k: to.k * f, r: to.r + da, x: cx + dx * c - dy * sn, y: cy + dx * sn + dy * c };
+      this.view = { ...from };
+      this.viewAnim = { from, to, t0: now, dur: Math.min(end, 1700), ease: EXPO };
+      this.invalidate();
     }
 
     /* ---------- interaction API ---------- */
@@ -573,6 +604,25 @@
       const dt = Math.min(64, now - (this.lastFrame || now));
       this.lastFrame = now;
 
+      if (this.introAnim) {
+        const t = now - this.introAnim.t0;
+        // Visible nodes are in tree order, so a parent's position is already updated when its children read it.
+        for (const n of this.visible) {
+          n.gt = clamp01((t - n.idel) / n.idur);
+          n.g = EXPO(n.gt);
+          if (n.depth === 0) continue;
+          const p = n.parent;
+          const r0 = p.depth === 0 ? HUB * p.g : p.cr, a0 = p.depth === 0 ? n.th : p.cth;
+          n.cr = r0 + (n.r - r0) * n.g;
+          n.cth = a0 + (n.th - a0) * n.g;
+        }
+        if (t >= this.introAnim.end) {
+          // Finish only the nodes; a zoom or pan the user started meanwhile carries on.
+          for (const n of this.visible) { n.cr = n.r; n.cth = n.th; n.g = n.gt = 1; }
+          this.introAnim = null;
+        }
+        moving = true;
+      }
       if (this.anim) {
         const t = Math.min(1, (now - this.anim.t0) / this.anim.dur), e = EASE(t);
         for (const n of this.visible) { n.cr = n.fr + (n.r - n.fr) * e; n.cth = n.fth + (n.th - n.fth) * e; }
@@ -587,7 +637,7 @@
       }
       if (this.viewAnim) {
         const a = this.viewAnim;
-        const t = Math.min(1, (now - a.t0) / a.dur), e = EASE(t);
+        const t = Math.min(1, (now - a.t0) / a.dur), e = (a.ease || EASE)(t);
         // Zoom moves in log space so it feels even at every scale.
         const k = Math.exp(Math.log(a.from.k) + (Math.log(a.to.k) - Math.log(a.from.k)) * e);
         this.view = { k, x: a.from.x + (a.to.x - a.from.x) * e, y: a.from.y + (a.to.y - a.from.y) * e, r: a.from.r + (a.to.r - a.from.r) * e };
@@ -688,7 +738,7 @@
       const batches = new Map();
       for (const n of all) {
         const p = n.parent;
-        if (!p) continue;
+        if (!p || n.gt <= 0) continue;
         if (!inside(n.px, n.py) && !inside(p.px, p.py) && !inside((n.px + p.px) / 2, (n.py + p.py) / 2)) continue;
         const state = n.exit ? 2 : dim(n) ? 1 : 0;
         const key = n.cat + state + (n.depth === 1 ? 'a' : 'b');
@@ -718,13 +768,17 @@
       const radial = [], strong = [], flat = [];
       for (const n of all) {
         if (n.depth === 0 || !inside(n.px, n.py)) continue;
-        const fade = n.exit ? n.fade * 0.6 : dim(n) ? 0.22 : n.raw.pend ? 0.35 : 1;
+        if (n.gt <= 0) continue;
+        const fade = (n.exit ? n.fade * 0.6 : dim(n) ? 0.22 : n.raw.pend ? 0.35 : 1) * Math.min(1, n.gt * 2.5);
         c.globalAlpha = fade;
         this.dot(c, n, k, lit.has(n), clean);
         if (n.exit) continue;
+        // Labels follow once the point has nearly landed, so text never streaks across the map.
+        const textIn = n.gt >= 1 ? 1 : EASE(clamp01((n.gt - 0.45) / 0.55));
+        if (textIn <= 0) continue;
         const isMatch = !clean && !!this.matches && this.matches.has(n);
         if (!(this.labelShown(n, view) || lit.has(n) || (isMatch && 12 * s * k >= 6))) continue;
-        const entry = { n, fade, emph: lit.has(n) || isMatch || (!clean && n === this.selected) };
+        const entry = { n, fade: fade * textIn, emph: lit.has(n) || isMatch || (!clean && n === this.selected) };
         if (n.vk.length || n.depth === 1) flat.push(entry);
         else (entry.emph ? strong : radial).push(entry);
       }
@@ -740,18 +794,18 @@
       const p = n.parent;
       const t1 = n.pa, t0 = p.depth === 0 ? t1 : p.pa;
       // From the root, links start at the edge of the hub instead of its centre.
-      c.moveTo(p.depth === 0 ? Math.cos(t1) * HUB : p.px, p.depth === 0 ? Math.sin(t1) * HUB : p.py);
+      c.moveTo(p.depth === 0 ? Math.cos(t1) * HUB * p.g : p.px, p.depth === 0 ? Math.sin(t1) * HUB * p.g : p.py);
       if (this.prefs.links === 'straight') { c.lineTo(n.px, n.py); return; }
       const mid = (p.cr + n.cr) / 2;
       c.bezierCurveTo(Math.cos(t0) * mid, Math.sin(t0) * mid, Math.cos(t1) * mid, Math.sin(t1) * mid, n.px, n.py);
     }
 
     dot(c, n, k, lit, clean) {
-      const col = this.color(n), r = this.radius(n), x = n.px, y = n.py;
+      const col = this.color(n), r = this.radius(n) * n.g, x = n.px, y = n.py;
       const stroke = 1.6 / Math.max(0.7, Math.min(k, 1.5));
       const im = this.prefs.icons && n.raw.i && 14 * k >= 9 ? this.img(n.raw.i) : null;
       if (im) {
-        c.drawImage(im, x - 8, y - 8, 16, 16);
+        c.drawImage(im, x - 8 * n.g, y - 8 * n.g, 16 * n.g, 16 * n.g);
       } else if (n.kids.length && !n.open) {
         // A folded branch is a hollow ring, so it reads as "more inside".
         c.beginPath(); c.arc(x, y, r, 0, TAU);
@@ -823,13 +877,15 @@
 
     drawRoot(c, clean) {
       const n = this.root;
-      c.globalAlpha = 1;
-      c.beginPath(); c.arc(0, 0, HUB, 0, TAU);
+      if (n.gt <= 0) return;
+      c.globalAlpha = Math.min(1, n.gt * 2);
+      c.beginPath(); c.arc(0, 0, HUB * (0.6 + 0.4 * n.g), 0, TAU);
       c.fillStyle = this.col.accent; c.fill();
       if (!clean && n === this.selected) { c.beginPath(); c.arc(0, 0, HUB + 6, 0, TAU); c.lineWidth = 2; c.strokeStyle = this.col.fg; c.stroke(); }
       let fs = 15;
       this.mctx.font = `600 ${fs}px ${FONT}`;
       while (this.mctx.measureText(n.name).width > 78 && fs > 9) { fs -= 1; this.mctx.font = `600 ${fs}px ${FONT}`; }
+      c.globalAlpha = clamp01((n.gt - 0.35) / 0.65);
       c.fillStyle = this.col.ink;
       c.textAlign = 'center'; c.textBaseline = 'middle';
       c.font = `600 ${fs}px ${FONT}`;

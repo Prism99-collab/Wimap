@@ -102,7 +102,14 @@ public sealed class MainForm : Form
         core.Settings.IsGeneralAutofillEnabled = false;
         core.Settings.IsPasswordAutosaveEnabled = false;
         core.Settings.AreBrowserAcceleratorKeysEnabled = dev; // keeps Ctrl+P, Ctrl+R and friends from acting on the app shell
-        core.AddWebResourceRequestedFilter(Host + "*", CoreWebView2WebResourceContext.All);
+        // The export preview is a sandboxed iframe, which some PCs run in its own process. Only this overload
+        // routes such iframe requests here; without it they hit real DNS and fail ("wimap.local could not be found").
+        try { core.AddWebResourceRequestedFilter(Host + "*", CoreWebView2WebResourceContext.All, CoreWebView2WebResourceRequestSourceKinds.All); }
+        catch (Exception e) when (e is NotImplementedException or InvalidCastException or COMException)
+        {
+            Log.Write("old WebView2 runtime: iframe request filter unavailable, using the basic one");
+            core.AddWebResourceRequestedFilter(Host + "*", CoreWebView2WebResourceContext.All);
+        }
         core.WebResourceRequested += ServeUi;
         core.WebMessageReceived += OnMessage;
         // Links open in the user's browser, never inside the app.
