@@ -20,4 +20,11 @@
     <ProjectReference Include="..\..\src\Wimap\Wimap.csproj" />
   </ItemGroup>
 
+  <!-- Same as the app: the WebView2 package's WPF control is not used and pulls in a second WindowsBase. -->
+  <Target Name="DropUnusedWebView2Wpf" BeforeTargets="ResolveAssemblyReferences">
+    <ItemGroup>
+      <Reference Remove="@(Reference)" Condition="'%(Filename)' == 'Microsoft.Web.WebView2.Wpf'" />
+    </ItemGroup>
+  </Target>
+
 </Project>

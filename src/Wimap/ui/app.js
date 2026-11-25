@@ -24,6 +24,7 @@
     branches: Object.keys(BRANCHES), depth: 3,
     panel: 'right', panelSize: 360, panelHeight: 300, tools: true, legend: true, hints: true,
     labelScale: 1, links: 'curved', openDepth: 2, icons: true, motion: !reduceMotion, rotateGestures: true,
+    welcome: true,
   };
   const ALLOWED = { panel: ['right', 'left', 'bottom'], labelScale: [0.9, 1, 1.2], links: ['curved', 'straight'], openDepth: [1, 2, 3], depth: [2, 3, 4] };
 
@@ -260,6 +261,7 @@
         state.version = msg.version || '';
         try { state.last = msg.last ? sanitize(msg.last) : null; } catch { state.last = null; }
         showPreview();
+        if (prefs.welcome) openWelcome();
         break;
       case 'stage': {
         const li = document.querySelector(`#stages li[data-k="${msg.key}"]`);
@@ -486,6 +488,34 @@
     applyPrefs();
   });
 
+  /* ---------- welcome ---------- */
+
+  const wcDlg = $('welcomeDlg');
+  let wcMap = null;
+  /** Opens over the home screen. The map on the left unfolds once from its branches; nothing loops. */
+  function openWelcome() {
+    if (wcDlg.open || state.scanning) return;
+    $('wcHide').checked = !prefs.welcome;
+    wcDlg.returnValue = '';
+    openDialog(wcDlg);
+    if (!wcMap) wcMap = new window.WMap($('welcomeCanvas'), { order: ORDER, prefs: { icons: prefs.icons, motion: prefs.motion, links: prefs.links } });
+    wcMap.resize();
+    const root = state.last ? state.last.root : { n: state.machine, k: 'root', c: ORDER.map(k => ({ n: BRANCHES[k].label, k: 'cat', ck: k })) };
+    wcMap.setData(root, state.last ? state.last.icons : {}, { openDepth: 1 });
+    setTimeout(() => {
+      if (!wcDlg.open) return;
+      for (const k of wcMap.root.kids) k.open = true;
+      wcMap.layout(false);
+      wcMap.fit(true);
+    }, 360);
+  }
+  wcDlg.addEventListener('close', () => {
+    prefs.welcome = !$('wcHide').checked;
+    savePrefs();
+    applyPrefs();
+    if (wcDlg.returnValue === 'scan' && state.screen === 'home') startScan();
+  });
+
   /* ---------- shortcuts dialog ---------- */
 
   const kbd = s => s.split(' ').map(k => `<kbd>${esc(k)}</kbd>`).join('');
@@ -555,6 +585,7 @@
       ...[[0.9, 'Small'], [1, 'Medium'], [1.2, 'Large']].map(([v, l]) => ({ label: l, type: 'radio', checked: () => prefs.labelScale === v, run: () => setPref('labelScale', v) })),
     ] },
     { label: 'Help', items: [
+      { label: 'Welcome screen', run: openWelcome, enabled: () => !state.scanning },
       { label: 'Shortcuts and search', keys: 'F1', run: () => openDialog($('keysDlg')) },
       '-',
       { label: 'About Wimap', run: () => { $('abVersion').textContent = state.version; openDialog($('aboutDlg')); } },

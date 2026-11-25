@@ -120,8 +120,9 @@ dialog[open] { animation: dlg-in 220ms var(--ease); }
 @keyframes dlg-in { from { opacity: 0; transform: translateY(8px); } }
 .dlg { width: min(760px, calc(100vw - 48px)); max-height: calc(100vh - 48px); }
 .dlg.narrow { width: min(520px, calc(100vw - 48px)); }
-.dlg > form { display: flex; flex-direction: column; gap: 16px; padding: 20px 24px 24px; max-height: calc(100vh - 48px); overflow: auto; }
-.dlg-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.dlg > form { display: flex; flex-direction: column; gap: 16px; padding: 0 24px 24px; max-height: calc(100vh - 48px); overflow: auto; }
+/* Headers stay put while a long dialog scrolls, so its close button is always in reach. */
+.dlg-head { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 -24px; padding: 20px 24px 8px; background: var(--bg-1); }
 .dlg-head h2 { margin: 0; font: 500 20px/28px var(--font); }
 .dlg-lede { margin: -8px 0 0; color: var(--fg-2); }
 .dlg-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
@@ -144,10 +145,33 @@ dialog[open] { animation: dlg-in 220ms var(--ease); }
 .check .n { color: var(--fg-3); font: 12px var(--mono); }
 .check .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--c); margin-right: 8px; vertical-align: 1px; }
 
+/* Welcome: the map unfolds on the left, three plain steps on the right */
+.welcome { width: min(920px, calc(100vw - 48px)); overflow: hidden; }
+.welcome[open] { display: grid; grid-template-columns: minmax(0, 1fr) minmax(360px, 420px); }
+.wc-visual { position: relative; min-height: 460px; background: var(--map-bg); border-right: 1px solid var(--line); }
+.wc-visual canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.wc-body { position: relative; display: flex; flex-direction: column; padding: 40px 32px 28px; }
+.wc-close { position: absolute; top: 12px; right: 12px; }
+.wc-body h2 { margin: 0; font: 500 30px/1.15 var(--display); letter-spacing: -0.015em; }
+.wc-lede { margin: 12px 0 0; color: var(--fg-2); font-size: 15px; line-height: 1.55; }
+.wc-steps { list-style: none; margin: 28px 0 0; padding: 0; display: flex; flex-direction: column; gap: 18px; }
+.wc-steps li { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 14px; align-items: start; }
+.wc-n { width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; border: 1px solid var(--line-2); color: var(--fg-2); font-size: 12px; }
+.wc-steps b { display: block; font-weight: 500; font-size: 15px; line-height: 28px; }
+.wc-steps p { margin: 0; color: var(--fg-3); font-size: 13px; line-height: 1.5; }
+.wc-foot { margin-top: auto; padding-top: 28px; display: flex; flex-direction: column; gap: 16px; }
+.wc-foot .row-actions { justify-content: flex-end; }
+.wc-hide { display: flex; align-items: center; gap: 8px; color: var(--fg-2); font-size: 13px; cursor: pointer; align-self: flex-start; }
+.wc-hide input { width: 16px; height: 16px; margin: 0; accent-color: var(--fg); }
+@media (max-width: 820px) {
+  .welcome[open] { grid-template-columns: 1fr; }
+  .wc-visual { display: none; }
+}
+
 /* Export sheet: options beside a live preview */
 .sheet { width: calc(100vw - 48px); height: calc(100vh - 48px); max-width: none; max-height: none; }
 .sheet[open] { display: grid; grid-template-columns: 380px minmax(0, 1fr); }
-.ex-form { padding: 20px 24px 0; overflow: auto; display: flex; flex-direction: column; gap: 20px; border-right: 1px solid var(--line); }
+.ex-form { padding: 0 24px; overflow: auto; display: flex; flex-direction: column; gap: 20px; border-right: 1px solid var(--line); }
 .ex-form .dlg-foot { margin: auto -24px 0; position: sticky; bottom: 0; padding: 16px 24px 20px; background: var(--bg-1); border-top: 1px solid var(--line); }
 .ex-form .dlg-foot.done { flex-direction: column; align-items: stretch; gap: 10px; }
 .done p { margin: 0; overflow-wrap: anywhere; }

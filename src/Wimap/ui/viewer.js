@@ -290,6 +290,7 @@
 
       if (this.host.handleKeys) {
         document.addEventListener('keydown', e => {
+          if (this.root.offsetParent === null) return; // another tab is showing
           const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName || '');
           if ((e.key === '/' && !typing) || (e.key.toLowerCase() === 'f' && (e.ctrlKey || e.metaKey))) { e.preventDefault(); this.focusSearch(); }
           else if (!typing && document.activeElement !== this.canvas) this.globalKeys(e);

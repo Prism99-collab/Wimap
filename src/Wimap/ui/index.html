@@ -86,6 +86,30 @@
   </section>
 </main>
 
+<!-- Welcome -->
+<dialog class="welcome" id="welcomeDlg" aria-labelledby="wcTitle" aria-describedby="wcLede">
+  <div class="wc-visual" aria-hidden="true">
+    <canvas id="welcomeCanvas"></canvas>
+  </div>
+  <form method="dialog" class="wc-body">
+    <button class="icon-btn sm wc-close" type="button" data-close aria-label="Close"><svg class="i" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    <h2 id="wcTitle">Welcome to Wimap</h2>
+    <p class="wc-lede" id="wcLede">See everything on this PC as one map, then keep it for the day you move to a new one.</p>
+    <ol class="wc-steps">
+      <li><span class="wc-n mono">1</span><div><b>Map</b><p>A scan reads your apps, AI tools, browsers, files and drives in a few seconds. Nothing leaves this PC.</p></div></li>
+      <li><span class="wc-n mono">2</span><div><b>Explore</b><p>Search anything, open and fold branches, turn the map. Click a point to see where it lives.</p></div></li>
+      <li><span class="wc-n mono">3</span><div><b>Keep</b><p>Export one HTML file with a reinstall list, and tick things off on your next PC.</p></div></li>
+    </ol>
+    <div class="wc-foot">
+      <label class="wc-hide"><input type="checkbox" id="wcHide">Don't show this again</label>
+      <div class="row-actions">
+        <button class="btn ghost" type="submit" value="later" id="wcLater">Look around first</button>
+        <button class="btn primary" type="submit" value="scan" id="wcScan" autofocus>Map this PC</button>
+      </div>
+    </div>
+  </form>
+</dialog>
+
 <!-- Export HTML -->
 <dialog class="sheet" id="exportDlg" aria-labelledby="exTitle">
   <form class="ex-form" id="exForm" method="dialog">
@@ -198,6 +222,7 @@
       <label class="sw"><span>Navigation tools on the map</span><span class="switch"><input type="checkbox" data-pref="tools"><span></span></span></label>
       <label class="sw"><span>Branch filters above the map</span><span class="switch"><input type="checkbox" data-pref="legend"><span></span></span></label>
       <label class="sw"><span>Hints at the bottom of the map</span><span class="switch"><input type="checkbox" data-pref="hints"><span></span></span></label>
+      <label class="sw"><span>Welcome screen when Wimap opens</span><span class="switch"><input type="checkbox" data-pref="welcome"><span></span></span></label>
 
       <h3>Map</h3>
       <div class="opt"><span id="prLabelL">Label size</span>

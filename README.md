@@ -60,7 +60,7 @@ The details panel can sit on the right, on the left or along the bottom, and you
 
 ![The reinstall list in an exported map, with a few apps already ticked off](docs/reinstall-list.png)
 
-**File › Export HTML** saves the map as one file that opens offline in any browser. It includes the reinstall list above. Every app, extension, MCP server and dev tool is there with a link to get it again, and your ticks are remembered in that browser. Before saving you can leave out bookmarks, hide your user folder from paths, and drop the app icons to make the file smaller.
+**File › Export HTML** saves the map as one file that opens offline in any browser. It includes the reinstall list above. Every app, extension, MCP server and dev tool is there with a link to get it again, and your ticks are remembered in that browser. The outline on the left shows how far along each section is and jumps straight to it, and the filter plus All, To do and Done narrow a long list down to what's left. Before saving you can leave out bookmarks, hide your user folder from paths, and drop the app icons to make the file smaller.
 
 If you tick the winget option, Wimap also saves a winget file next to the map. On the new PC, `winget import -i <file>` reinstalls most of your apps in one go.
 

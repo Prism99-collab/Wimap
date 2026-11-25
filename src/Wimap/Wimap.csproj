@@ -10,7 +10,7 @@
     <ApplicationIcon>wimap.ico</ApplicationIcon>
     <AssemblyName>Wimap</AssemblyName>
     <Product>Wimap</Product>
-    <Version>1.0.0</Version>
+    <Version>1.0.1</Version>
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
   </PropertyGroup>
