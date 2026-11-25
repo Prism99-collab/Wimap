@@ -74,6 +74,8 @@ AI tool configs often hold API keys, so Wimap is careful with them. For an MCP s
 
 Your last map is kept in `%LOCALAPPDATA%\Wimap` so it opens instantly next time. **Settings › Preferences › Forget saved map** deletes it, and so does the uninstaller if you say yes when it asks.
 
+The full policy is in [PRIVACY.md](PRIVACY.md).
+
 ## Building from source
 
 You need the .NET 8 SDK and Node.js 20 or later. For the installer you also need [Inno Setup 6](https://jrsoftware.org/isinfo.php), which you can get with `winget install JRSoftware.InnoSetup`.
@@ -86,11 +88,13 @@ dotnet publish src/Wimap -c Release -o dist
 
 That gives you a self-contained `dist\Wimap.exe`. `installer\build.ps1` runs the tests, publishes, and then builds `dist\WimapSetup-<version>.exe`. The version number lives in `src/Wimap/Wimap.csproj`. Pushing a tag such as `v1.0.1` makes GitHub Actions build both files and attach them to a release.
 
-The app is a small C# host (WinForms and WebView2) around a plain HTML, CSS and JavaScript interface in `src/Wimap/ui`. Set `WIMAP_UI` to that folder and the app loads the interface from disk, so a reload shows your edits without rebuilding. `WIMAP_DEVTOOLS=1` turns on the browser developer tools. `Wimap.exe --scan out.json` runs a scan without opening a window.
+`installer\build-msix.ps1` builds the Microsoft Store package (it needs the Windows SDK). [installer/msix/STORE-LISTING.md](installer/msix/STORE-LISTING.md) has the Partner Center values it takes and everything to paste into the submission.
+
+The app is a small C# host (WinForms and WebView2) around a plain HTML, CSS and JavaScript interface in `src/Wimap/ui`. In Debug builds, setting `WIMAP_UI` to that folder makes the app load the interface from disk, so a reload shows your edits without rebuilding, and `WIMAP_DEVTOOLS=1` turns on the browser developer tools. Release builds ignore both. `Wimap.exe --scan out.json` runs a scan without opening a window.
 
 ```
 src/Wimap/        the app: window, scanners (Scan/) and interface (ui/)
-installer/        Inno Setup script and build script
+installer/        Inno Setup script, Store package (msix/) and build scripts
 tests/            scanner tests (xUnit) and interface tests (node --test)
 ```
 

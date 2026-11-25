@@ -12,6 +12,10 @@
     <Product>Wimap</Product>
     <Version>1.0.2</Version>
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- WFAC010 asks for DPI settings in code only; app.manifest repeats the same PerMonitorV2 mode on purpose,
+         because the Windows App Certification Kit only checks the manifest. -->
+    <NoWarn>$(NoWarn);WFAC010</NoWarn>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
   </PropertyGroup>
 

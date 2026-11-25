@@ -94,8 +94,15 @@ public sealed class MainForm : Form
             return;
         }
         var core = _web.CoreWebView2;
+#if DEBUG
         var dev = Debugger.IsAttached || Environment.GetEnvironmentVariable("WIMAP_DEVTOOLS") == "1";
+#else
+        const bool dev = false; // release builds never expose developer tools
+#endif
         core.Settings.AreDevToolsEnabled = dev;
+        core.Settings.AreHostObjectsAllowed = false; // pages talk to the app only through checked web messages
+        core.Settings.IsSwipeNavigationEnabled = false;
+        core.Settings.IsReputationCheckingRequired = false; // only local pages are shown, so no URL checks go to Microsoft
         core.Settings.AreDefaultContextMenusEnabled = dev;
         core.Settings.IsStatusBarEnabled = false;
         core.Settings.IsZoomControlEnabled = false;
@@ -112,6 +119,9 @@ public sealed class MainForm : Form
         }
         core.WebResourceRequested += ServeUi;
         core.WebMessageReceived += OnMessage;
+        // Wimap never needs the camera, microphone, location, notifications or downloads; refuse them all.
+        core.PermissionRequested += (_, e) => e.State = CoreWebView2PermissionState.Deny;
+        core.DownloadStarting += (_, e) => e.Cancel = true;
         // Links open in the user's browser, never inside the app.
         core.NewWindowRequested += (_, e) => { e.Handled = true; OpenUrl(e.Uri); };
         core.NavigationStarting += (_, e) => { if (!e.Uri.StartsWith(Host, StringComparison.Ordinal)) { e.Cancel = true; OpenUrl(e.Uri); } };
@@ -154,7 +164,9 @@ public sealed class MainForm : Form
 
     private static Stream? OpenUiFile(string rel)
     {
+#if DEBUG
         // During development WIMAP_UI points at the ui folder, so edits show without a rebuild.
+        // Release builds only ever serve the interface embedded in the exe.
         var devDir = Environment.GetEnvironmentVariable("WIMAP_UI");
         if (devDir != null)
         {
@@ -162,6 +174,7 @@ public sealed class MainForm : Form
             var full = Path.GetFullPath(Path.Combine(root, rel));
             if (full.StartsWith(root, StringComparison.OrdinalIgnoreCase) && File.Exists(full)) return File.OpenRead(full);
         }
+#endif
         return Assembly.GetExecutingAssembly().GetManifestResourceStream("ui/" + rel);
     }
 

@@ -80,25 +80,25 @@ public static class BrowserScanner
         }
     }
 
+    /// <summary>
+    /// Profile folders and their display names, read from each profile's own Preferences file.
+    /// "Local State" would be simpler, but it holds the browser's cookie and password encryption key,
+    /// so Wimap never opens it (security tools rightly treat apps that read it as suspicious).
+    /// </summary>
     private static List<(string dir, string label)> ChromiumProfiles(string userData)
     {
         var list = new List<(string, string)>();
-        try
+        foreach (var d in AiScanner.SafeDirs(userData).Where(d => Path.GetFileName(d) is "Default" || Path.GetFileName(d).StartsWith("Profile ")))
         {
-            using var doc = JsonDocument.Parse(File.ReadAllText(Path.Combine(userData, "Local State")));
-            if (doc.RootElement.TryGetProperty("profile", out var p) && p.TryGetProperty("info_cache", out var cache))
-                foreach (var e in cache.EnumerateObject())
-                {
-                    var dir = Path.Combine(userData, e.Name);
-                    if (!Directory.Exists(dir)) continue;
-                    var name = e.Value.TryGetProperty("name", out var n) ? n.GetString() : e.Name;
-                    list.Add((dir, string.IsNullOrWhiteSpace(name) ? e.Name : name!));
-                }
+            string? name = null;
+            try
+            {
+                using var doc = JsonDocument.Parse(File.ReadAllText(Path.Combine(d, "Preferences")));
+                if (doc.RootElement.TryGetProperty("profile", out var p) && p.TryGetProperty("name", out var n)) name = n.GetString();
+            }
+            catch { /* no Preferences file or unreadable: fall back to the folder name */ }
+            list.Add((d, string.IsNullOrWhiteSpace(name) ? Path.GetFileName(d) : name!));
         }
-        catch { }
-        if (list.Count == 0)
-            foreach (var d in AiScanner.SafeDirs(userData).Where(d => Path.GetFileName(d) is "Default" || Path.GetFileName(d).StartsWith("Profile ")))
-                list.Add((d, Path.GetFileName(d)));
         return list;
     }
 
