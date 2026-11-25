@@ -10,7 +10,7 @@
     <ApplicationIcon>wimap.ico</ApplicationIcon>
     <AssemblyName>Wimap</AssemblyName>
     <Product>Wimap</Product>
-    <Version>1.0.2</Version>
+    <Version>1.0.3</Version>
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <!-- WFAC010 asks for DPI settings in code only; app.manifest repeats the same PerMonitorV2 mode on purpose,

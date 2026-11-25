@@ -56,16 +56,13 @@ jobs:
             dist/Wimap.exe
             dist/WimapSetup-*.exe
 
-      # Microsoft Store package, built once the Partner Center identity is saved as repository variables
-      # (Settings > Secrets and variables > Actions > Variables): MSIX_IDENTITY_NAME, MSIX_PUBLISHER, MSIX_PUBLISHER_NAME.
-      # It is kept as a build artifact for upload to Partner Center, not attached to the GitHub release.
+      # Microsoft Store package (its Partner Center identity is built into the script). It is kept as a build
+      # artifact for upload to Partner Center, not attached to the GitHub release.
       - name: Store package
-        if: vars.MSIX_IDENTITY_NAME != ''
         shell: pwsh
-        run: installer\build-msix.ps1 -IdentityName "${{ vars.MSIX_IDENTITY_NAME }}" -Publisher "${{ vars.MSIX_PUBLISHER }}" -PublisherDisplayName "${{ vars.MSIX_PUBLISHER_NAME }}"
+        run: installer\build-msix.ps1
 
       - uses: actions/upload-artifact@v6
-        if: vars.MSIX_IDENTITY_NAME != ''
         with:
           name: Wimap-Store
           path: dist/Wimap-*.msix

@@ -1,15 +1,15 @@
 # Builds dist\Wimap-<version>.msix for the Microsoft Store.
 #
-# For the Store, pass the three values from Partner Center (Apps and games > Wimap > Product identity):
-#   powershell -File installer\build-msix.ps1 -IdentityName "12345Prism99.Wimap" -Publisher "CN=XXXXXXXX-..." -PublisherDisplayName "Prism99"
-# The Store signs the package itself, so the upload is unsigned.
+# The defaults are Wimap's identity from Partner Center (Apps and games > Wimap > Product identity), so a plain
+#   powershell -File installer\build-msix.ps1
+# builds the package to upload. The Store signs it itself, so the upload is unsigned.
 #
 # -Test builds a separate "Wimap Test" package for trying it on this PC. Windows installs it only when it is
 # signed with a certificate it trusts: pass -SignThumbprint with a code-signing certificate from
 # Cert:\CurrentUser\My whose subject is "CN=Wimap Test", and trust that certificate in LocalMachine\TrustedPeople.
 param(
   [string]$IdentityName = 'Prism99.Wimap',
-  [string]$Publisher = 'CN=Prism99',
+  [string]$Publisher = 'CN=22A168C9-E643-49D5-80D3-35C64DB3A581',
   [string]$PublisherDisplayName = 'Prism99',
   [switch]$Test,
   [string]$SignThumbprint

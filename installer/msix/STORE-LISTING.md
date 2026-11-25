@@ -2,20 +2,19 @@
 
 Everything to paste into Partner Center for Wimap. Fields are in the order the submission pages show them.
 
-## Before the first upload
+## The package
 
-1. In Partner Center, go to **Apps and games › New product › MSIX or PWA app** and reserve the name **Wimap**.
-2. Open **Product management › Product identity** and copy three values:
-   - `Package/Identity/Name` (looks like `12345Prism99.Wimap`)
-   - `Package/Identity/Publisher` (looks like `CN=XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX`)
-   - `Package/Properties/PublisherDisplayName`
-3. Build the package with them:
+Wimap's Store identity (Partner Center › Wimap › Product identity) is built into `installer\build-msix.ps1`:
 
-```powershell
-powershell -File installer\build-msix.ps1 -IdentityName "<Name>" -Publisher "<Publisher>" -PublisherDisplayName "<PublisherDisplayName>"
-```
+| Field | Value |
+| --- | --- |
+| Package/Identity/Name | `Prism99.Wimap` |
+| Package/Identity/Publisher | `CN=22A168C9-E643-49D5-80D3-35C64DB3A581` |
+| PublisherDisplayName | `Prism99` |
+| Store ID | `9PJP3PQ8LMVG` |
+| Store page | https://apps.microsoft.com/detail/9PJP3PQ8LMVG |
 
-Upload `dist\Wimap-<version>.msix` under **Packages**. The Store signs it, so it is uploaded unsigned.
+`powershell -File installer\build-msix.ps1` builds `dist\Wimap-<version>.msix`, and every CI run keeps one as the `Wimap-Store` artifact. Upload it under **Packages**; the Store signs it, so it is uploaded unsigned. Each new upload needs a higher version than the last (`<Version>` in `src/Wimap/Wimap.csproj`).
 
 ## Pricing and availability
 
